@@ -62,7 +62,7 @@ module LibertyBuildpack::Container
       @vcap_services = Heroku.heroku? ? Heroku.new.generate_vcap_services(ENV) : context[:vcap_services]
       @vcap_application = context[:vcap_application]
       @license_id = context[:license_ids]['IBM_LIBERTY_LICENSE']
-      @environment = context[:environment]
+      @environment = context[:environment] || {}
       
       unless @environment['APP_DIR'].nil?
         @app_dir = File.join(@app_dir, @environment['APP_DIR'])
