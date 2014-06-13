@@ -67,7 +67,7 @@ module LibertyBuildpack::Container
       unless @environment['APP_DIR'].nil?
         @app_dir = File.join(@app_dir, @environment['APP_DIR'])
       end
-      puts "appdir=#{@app_dir}"
+
       @apps = apps
     end
 
