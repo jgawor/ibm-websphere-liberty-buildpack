@@ -63,6 +63,11 @@ module LibertyBuildpack::Container
       @vcap_application = context[:vcap_application]
       @license_id = context[:license_ids]['IBM_LIBERTY_LICENSE']
       @environment = context[:environment]
+      
+      unless @environment['APP_DIR'].nil?
+        @app_dir = File.join(@app_dir, @environment['APP_DIR'])
+      end
+      puts "appdir=#{@app_dir}"
       @apps = apps
     end
 
@@ -118,11 +123,13 @@ module LibertyBuildpack::Container
     #
     # @return [String] the command to run the application.
     def release
-      server_dir = ' .liberty/usr/servers/' << server_name << '/'
+      base_dir = @environment['APP_DIR'].nil? ? './' : @environment['APP_DIR']
+
+      server_dir = " #{base_dir}.liberty/usr/servers/" << server_name << '/'
       runtime_vars_file =  server_dir + 'runtime-vars.xml'
-      create_vars_string = File.join(LIBERTY_HOME, 'create_vars.rb') << runtime_vars_file << ' && '
+      create_vars_string = File.join(base_dir, LIBERTY_HOME, 'create_vars.rb') << runtime_vars_file << ' && '
       java_home_string = "JAVA_HOME=\"$PWD/#{@java_home}\""
-      start_script_string = ContainerUtils.space(File.join(LIBERTY_HOME, 'bin', 'server'))
+      start_script_string = ContainerUtils.space(File.join(base_dir, LIBERTY_HOME, 'bin', 'server'))
       start_script_string << ContainerUtils.space('run')
       jvm_options
       server_name_string = ContainerUtils.space(server_name)
