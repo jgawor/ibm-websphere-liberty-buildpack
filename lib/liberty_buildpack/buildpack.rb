@@ -125,6 +125,10 @@ module LibertyBuildpack
       Buildpack.require_component_files
       components = Buildpack.components @logger
 
+      unless ENV['APP_DIR'].nil?
+        app_dir = File.join(app_dir, ENV['APP_DIR'])
+      end
+
       java_home = ''
       java_opts = []
       @lib_directory = Buildpack.lib_directory app_dir
