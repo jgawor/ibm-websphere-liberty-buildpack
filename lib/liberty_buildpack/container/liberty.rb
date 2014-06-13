@@ -123,7 +123,7 @@ module LibertyBuildpack::Container
       server_dir = " #{base_dir}.liberty/usr/servers/" << server_name << '/'
       runtime_vars_file =  server_dir + 'runtime-vars.xml'
       create_vars_string = File.join(base_dir, LIBERTY_HOME, 'create_vars.rb') << runtime_vars_file << ' && '
-      java_home_string = "JAVA_HOME=\"$PWD/#{@java_home}\""
+      java_home_string = "JAVA_HOME=\"$PWD/#{base_dir}#{@java_home}\""
       start_script_string = ContainerUtils.space(File.join(base_dir, LIBERTY_HOME, 'bin', 'server'))
       start_script_string << ContainerUtils.space('run')
       jvm_options
