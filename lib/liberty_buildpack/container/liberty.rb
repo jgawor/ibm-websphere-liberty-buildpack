@@ -214,7 +214,7 @@ module LibertyBuildpack::Container
 
     USR_PATH = 'usr'.freeze
 
-    SERVER_XML_GLOB = '*/usr/servers/*/server.xml'.freeze
+    SERVER_XML_GLOB = 'wlp/usr/servers/*/server.xml'.freeze
 
     SERVER_XML = 'server.xml'.freeze
 
