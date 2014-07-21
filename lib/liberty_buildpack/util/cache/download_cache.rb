@@ -109,8 +109,6 @@ module LibertyBuildpack
 
         TIMEOUT_SECONDS = 10.freeze
 
-        private_constant :FAILURE_LIMIT, :HTTP_ERRORS, :REDIRECT_TYPES, :TIMEOUT_SECONDS
-
         def attempt(http, request, cached_file)
           downloaded = false
 
