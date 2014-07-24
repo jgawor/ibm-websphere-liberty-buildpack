@@ -306,6 +306,7 @@ module LibertyBuildpack::Services
     #-----------------------------------------------------------------
     def find_datasource(doc, number_instances)
       # When only one service instance is bound, then we do not require matching config ids. When multiple service instances are bound, we do.
+      puts number_instances
       if number_instances == 1
         # tolerate degenerate condition of multiple datasources configured but only 1 is bound.
         datasources = doc.elements.to_a("//dataSource[@id='#{@datasource_id}']")
@@ -313,6 +314,7 @@ module LibertyBuildpack::Services
       else
         datasources = doc.elements.to_a("//dataSource[@id='#{@datasource_id}']")
       end
+      puts datasources
       return datasources if datasources.empty?
       raise "The datasource configuration for service #{@service_name} is inconsistent" unless Utils.is_logical_singleton?(datasources)
       datasources
