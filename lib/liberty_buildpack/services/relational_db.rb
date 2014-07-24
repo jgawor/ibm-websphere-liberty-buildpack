@@ -310,7 +310,7 @@ module LibertyBuildpack::Services
       if number_instances == 1
         # tolerate degenerate condition of multiple datasources configured but only 1 is bound.
         datasources = doc.elements.to_a("//dataSource[@id='#{@datasource_id}']")
-        datasources = doc.elements.to_a('//dataSource') if datasources.empty?
+#        datasources = doc.elements.to_a('//dataSource') if datasources.empty?
       else
         datasources = doc.elements.to_a("//dataSource[@id='#{@datasource_id}']")
       end
