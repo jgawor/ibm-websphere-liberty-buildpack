@@ -22,7 +22,7 @@ liberty_repository_properties:
   useRepository: true
 
 standalone:
- context_path: /
+ context_root: /
  features: 
  - jsf-2.0
  - jsp-2.2
