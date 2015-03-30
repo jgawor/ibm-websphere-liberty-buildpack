@@ -287,6 +287,8 @@ module LibertyBuildpack::Container
       application = REXML::XPath.match(server_xml_doc, '/server/application')[0]
       application.attributes['location'] = myapp_name
       application.attributes['type'] = myapp_type
+      application.attributes['context-root'] = @configuration['standalone']['context_root']
+      puts "FEATURES: #{@configuration['standalone']['features']}"
       XmlUtils.write_formatted_xml_file(server_xml_doc, filename)
     end
 
