@@ -170,7 +170,7 @@ module LibertyBuildpack::Framework
         LibertyBuildpack::Util::ApplicationCache.stub(:new).and_return(application_cache)
         application_cache.stub(:get).with('test-uri').and_yield(File.open('spec/fixtures/wlp-stub.jar'))
 
-        liberty = LibertyBuildpack::Container::Liberty.new(
+        LibertyBuildpack::Container::Liberty.new(
         app_dir: root,
         lib_directory: lib_directory,
         configuration: {},
@@ -184,22 +184,21 @@ module LibertyBuildpack::Framework
         configuration: {}
         ).compile
 
-        apps = liberty.apps
-        apps.each do |app|
-          lib = File.join(app, 'WEB-INF', 'lib')
-          test_jar_1 = File.join lib, 'test-jar-1.jar'
-          test_jar_2 = File.join lib, 'test-jar-2.jar'
-          test_text = File.join lib, 'test-text.txt'
-          expect(File.exists?(test_jar_1)).to eq(true)
-          expect(File.symlink?(test_jar_1)).to eq(true)
-          expect(File.readlink(test_jar_1)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-1.jar')).relative_path_from(Pathname.new(lib)).to_s)
+        app = war_file
 
-          expect(File.exists?(test_jar_2)).to eq(true)
-          expect(File.symlink?(test_jar_2)).to eq(true)
-          expect(File.readlink(test_jar_2)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-2.jar')).relative_path_from(Pathname.new(lib)).to_s)
+        lib = File.join(app, 'WEB-INF', 'lib')
+        test_jar_1 = File.join lib, 'test-jar-1.jar'
+        test_jar_2 = File.join lib, 'test-jar-2.jar'
+        test_text = File.join lib, 'test-text.txt'
+        expect(File.exists?(test_jar_1)).to eq(true)
+        expect(File.symlink?(test_jar_1)).to eq(true)
+        expect(File.readlink(test_jar_1)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-1.jar')).relative_path_from(Pathname.new(lib)).to_s)
 
-          expect(File.exists?(test_text)).to eq(false)
-        end
+        expect(File.exists?(test_jar_2)).to eq(true)
+        expect(File.symlink?(test_jar_2)).to eq(true)
+        expect(File.readlink(test_jar_2)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-2.jar')).relative_path_from(Pathname.new(lib)).to_s)
+
+        expect(File.exists?(test_text)).to eq(false)
       end
     end
 
@@ -219,7 +218,7 @@ module LibertyBuildpack::Framework
         LibertyBuildpack::Util::ApplicationCache.stub(:new).and_return(application_cache)
         application_cache.stub(:get).with('test-uri').and_yield(File.open('spec/fixtures/wlp-stub.jar'))
 
-        liberty = LibertyBuildpack::Container::Liberty.new(
+        LibertyBuildpack::Container::Liberty.new(
         app_dir: root,
         lib_directory: lib_directory,
         configuration: {},
@@ -233,24 +232,22 @@ module LibertyBuildpack::Framework
         configuration: {}
         ).compile
 
-        apps = liberty.apps
-        expect(apps.size).to eq(1)
-        apps.each do |app|
-          lib = File.join(app, 'WEB-INF', 'lib')
-          test_jar_1 = File.join lib, 'test-jar-1.jar'
-          test_jar_2 = File.join lib, 'test-jar-2.jar'
-          test_text = File.join lib, 'test-text.txt'
+        app = app_dir
 
-          expect(File.exists?(test_jar_1)).to eq(true)
-          expect(File.symlink?(test_jar_1)).to eq(true)
-          expect(File.readlink(test_jar_1)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-1.jar')).relative_path_from(Pathname.new(lib)).to_s)
+        lib = File.join(app, 'WEB-INF', 'lib')
+        test_jar_1 = File.join lib, 'test-jar-1.jar'
+        test_jar_2 = File.join lib, 'test-jar-2.jar'
+        test_text = File.join lib, 'test-text.txt'
 
-          expect(File.exists?(test_jar_2)).to eq(true)
-          expect(File.symlink?(test_jar_2)).to eq(true)
-          expect(File.readlink(test_jar_2)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-2.jar')).relative_path_from(Pathname.new(lib)).to_s)
+        expect(File.exists?(test_jar_1)).to eq(true)
+        expect(File.symlink?(test_jar_1)).to eq(true)
+        expect(File.readlink(test_jar_1)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-1.jar')).relative_path_from(Pathname.new(lib)).to_s)
 
-          expect(File.exists?(test_text)).to eq(false)
-        end
+        expect(File.exists?(test_jar_2)).to eq(true)
+        expect(File.symlink?(test_jar_2)).to eq(true)
+        expect(File.readlink(test_jar_2)).to eq(Pathname.new(File.join(lib_directory, 'test-jar-2.jar')).relative_path_from(Pathname.new(lib)).to_s)
+
+        expect(File.exists?(test_text)).to eq(false)
       end
     end
 

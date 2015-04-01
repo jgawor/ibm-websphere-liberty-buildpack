@@ -67,30 +67,7 @@ module LibertyBuildpack::Container
       @vcap_application = context[:vcap_application]
       @license_id = context[:license_ids]['IBM_LIBERTY_LICENSE']
       @environment = context[:environment]
-      @apps = apps
-    end
-
-    # Get a list of web applications that are in the server directory
-    #
-    # @return [Array<String>] :array of file names of discovered applications
-    def apps
-      apps_found = []
-      server_xml = Liberty.server_xml(@app_dir)
-      if Liberty.web_inf(@app_dir)
-        apps_found = [@app_dir]
-      elsif Liberty.meta_inf(@app_dir)
-        apps_found = [@app_dir]
-        wars = Dir.glob(File.expand_path(File.join(@app_dir, '*.war')))
-        Liberty.expand_apps(wars)
-      elsif server_xml
-        server_path = File.dirname(server_xml)
-        ears = Dir.glob("#{server_path}/**/*.ear")
-        Liberty.expand_apps(ears)
-        wars = Dir.glob("#{server_path}/**/*.war")
-        Liberty.expand_apps(wars)
-        apps_found = ears + wars
-      end
-      apps_found
+      unpack_apps
     end
 
     # Detects whether this application is a Liberty application.
@@ -170,6 +147,22 @@ module LibertyBuildpack::Container
       if File.exists?(default_server_path) && ! File.exists?(File.join(default_server_path, JVM_OPTIONS))
         default_server_pathname = Pathname.new(default_server_path)
         FileUtils.ln_sf(Pathname.new(jvm_options_src).relative_path_from(default_server_pathname), default_server_path)
+      end
+    end
+
+    def unpack_apps
+      server_xml = Liberty.server_xml(@app_dir)
+      if Liberty.web_inf(@app_dir)
+        # nothing to expand
+      elsif Liberty.meta_inf(@app_dir)
+        wars = Dir.glob(File.expand_path(File.join(@app_dir, '*.war')))
+        Liberty.expand_apps(wars)
+      elsif server_xml
+        server_path = File.dirname(server_xml)
+        ears = Dir.glob("#{server_path}/**/*.ear")
+        Liberty.expand_apps(ears)
+        wars = Dir.glob("#{server_path}/**/*.war")
+        Liberty.expand_apps(wars)
       end
     end
 
