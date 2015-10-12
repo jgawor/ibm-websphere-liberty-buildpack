@@ -59,9 +59,9 @@ When the `useRepository` option to `true`, you can pass additional properties un
 liberty_repository_properties:
   useRepository: true
   useDefaultRepository: false
-  myRepo.url=http://dev.repo.ibm.com:9080/ma/v1
-  myRepo.user=myUser
-  myRepo.userPassword=myPassword
+  myRepo.url: http://dev.repo.ibm.com:9080/ma/v1
+  myRepo.user: myUser
+  myRepo.userPassword: myPassword
 ```
 
 #### Default configuration 
