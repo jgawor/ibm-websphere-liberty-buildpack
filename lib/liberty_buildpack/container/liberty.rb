@@ -607,7 +607,7 @@ module LibertyBuildpack::Container
     def download_and_install_features
       server_xml = File.join(current_server_dir, SERVER_XML)
       feature_manager = FeatureManager.new(@app_dir, @java_home, @configuration)
-      feature_manager.download_and_install_features(server_xml, liberty_home)
+      feature_manager.install_features(server_name, liberty_home)
     end
 
     def download_and_unpack_archives(zips, root)

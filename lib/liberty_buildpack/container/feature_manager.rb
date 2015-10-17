@@ -87,6 +87,30 @@ module LibertyBuildpack::Container
         @logger.debug('exit')
       end
 
+      def install_features(server_name, liberty_home)
+        @logger.debug('entry')
+        if use_liberty_repository?
+          jvm_args = get_jvm_args
+          cmd = File.join(liberty_home, 'bin', 'installUtility')
+          script_string = "JAVA_HOME=\"#{@app_dir}/#{@java_home}\" JVM_ARGS=#{jvm_args} #{cmd} install --acceptLicense #{server_name}"
+
+          @logger.debug("script invocation string is #{script_string}")
+          output = `#{script_string} 2>&1`
+          puts "#{output}"
+          exitcode = $CHILD_STATUS.exitstatus
+          if exitcode == FEATURES_ALREADY_PRESENT_EXIT_CODE
+            @logger.debug("no extra features to install, output is #{output}")
+          elsif exitcode == FEATURES_INSTALLED_EXIT_CODE
+            @logger.debug("installed required features, output is #{output}")
+          else
+            @logger.debug("could not install required features, output is #{output}")
+            raise "could not install required features, output is #{output}"
+          end
+        end
+        @logger.debug('exit')
+      end
+
+
     private
 
       FEATURES_ALREADY_PRESENT_EXIT_CODE = 22
