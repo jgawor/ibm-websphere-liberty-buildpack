@@ -19,6 +19,7 @@ require 'application_helper'
 require 'logging_helper'
 require 'fileutils'
 require 'liberty_buildpack/repository/repository_index'
+require 'liberty_buildpack/repository/repository_utils'
 require 'liberty_buildpack/repository/version_resolver'
 require 'liberty_buildpack/util/configuration_utils'
 require 'liberty_buildpack/util/cache/download_cache'
@@ -32,9 +33,9 @@ describe LibertyBuildpack::Repository::RepositoryIndex do
 
   before do
     allow(LibertyBuildpack::Util::Cache::DownloadCache).to receive(:new).and_return(application_cache)
-    LibertyBuildpack::Repository::RepositoryIndex.class_variable_set(:@@platform, nil)
-    LibertyBuildpack::Repository::RepositoryIndex.class_variable_set(:@@architecture, nil)
-    LibertyBuildpack::Repository::RepositoryIndex.class_variable_set(:@@default_repository_root, nil)
+    LibertyBuildpack::Repository::RepositoryUtils.class_variable_set(:@@platform, nil)
+    LibertyBuildpack::Repository::RepositoryUtils.class_variable_set(:@@architecture, nil)
+    LibertyBuildpack::Repository::RepositoryUtils.class_variable_set(:@@default_repository_root, nil)
   end
 
   it 'loads index' do
