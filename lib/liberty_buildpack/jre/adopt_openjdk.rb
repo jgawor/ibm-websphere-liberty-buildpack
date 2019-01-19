@@ -18,6 +18,7 @@ require 'fileutils'
 require 'liberty_buildpack/diagnostics/common'
 require 'liberty_buildpack/container/common_paths'
 require 'liberty_buildpack/repository/configured_item'
+require 'liberty_buildpack/repository/version_resolver'
 require 'liberty_buildpack/util/cache/application_cache'
 require 'liberty_buildpack/util/format_duration'
 require 'liberty_buildpack/util/tokenized_version'
@@ -26,7 +27,7 @@ require 'pathname'
 module LibertyBuildpack::Jre
 
   # Encapsulates the detect, compile, and release functionality for selecting an OpenJDK JRE.
-  class OpenJdk
+  class AdoptOpenJdk
 
     # Filename of killjava script used to kill the JVM on OOM.
     KILLJAVA_FILE_NAME = 'killjava.sh'.freeze
@@ -53,9 +54,11 @@ module LibertyBuildpack::Jre
     #
     # @return [String, nil] returns +ibmjdk-<version>+.
     def detect
-      if !@jvm_type.nil? && 'openjdk'.casecmp(@jvm_type) == 0
-        @version = OpenJdk.find_openjdk(@configuration)[0]
-        id @version 
+      if !@jvm_type.nil? && 'adoptopenjdk'.casecmp(@jvm_type) == 0
+        release = AdoptOpenJdk.find_openjdk(@configuration)
+        id release['release_name']
+      else
+        nil
       end
     end
 
@@ -63,12 +66,14 @@ module LibertyBuildpack::Jre
     #
     # @return [void]
     def compile
-      @version, @uri = OpenJdk.find_openjdk(@configuration)
+      release = AdoptOpenJdk.find_openjdk(@configuration)
+      uri = release['binaries'][0]['binary_link']
+      @version = release['release_name']
       download_start_time = Time.now
 
-      print "-----> Downloading OpenJdk #{@version} from #{@uri} "
+      print "-----> Downloading Adapt OpenJdk #{@version} from #{uri} "
 
-      LibertyBuildpack::Util::Cache::ApplicationCache.new.get(@uri) do |file| # TODO: Use global cache
+      LibertyBuildpack::Util::Cache::ApplicationCache.new.get(uri) do |file| # TODO: Use global cache
         puts "(#{(Time.now - download_start_time).duration})"
         expand file
       end
@@ -79,9 +84,9 @@ module LibertyBuildpack::Jre
     #
     # @return [void]
     def release
-      @version = OpenJdk.find_openjdk(@configuration)[0]
-      @java_opts << "-XX:OnOutOfMemoryError=#{@common_paths.diagnostics_directory}/#{KILLJAVA_FILE_NAME}"
-      memory
+      release = AdoptOpenJdk.find_openjdk(@configuration)[0]
+      #@java_opts << "-XX:OnOutOfMemoryError=#{@common_paths.diagnostics_directory}/#{KILLJAVA_FILE_NAME}"
+      #memory
     end
 
     private
@@ -93,8 +98,6 @@ module LibertyBuildpack::Jre
     KEY_MEMORY_HEURISTICS = 'memory_heuristics'.freeze
 
     KEY_MEMORY_SIZES = 'memory_sizes'.freeze
-
-    VERSION_8 = LibertyBuildpack::Util::TokenizedVersion.new('1.8.0').freeze
 
     MEMORY_CONFIG_FOLDER = '.memory_config/'.freeze
 
@@ -109,25 +112,57 @@ module LibertyBuildpack::Jre
       FileUtils.rm_rf(java_home)
       FileUtils.mkdir_p(java_home)
 
-      system "tar xzf #{file.path} -C #{java_home} --strip 1 2>&1"
-
-      if system("[ $(ls #{java_home} | wc -l) = 1 ]") && system("[ ! $(ls #{java_home} | grep -w 'jre') ]")
-        FileUtils.rm_rf(java_home)
-        FileUtils.mkdir_p(java_home)
-        system "tar xzf #{file.path} -C #{java_home} --strip 2 2>&1"
-      end
+      depth = `tar tf #{file.path} | grep /bin/java | grep -o / | wc -l`
+      system "tar xzf #{file.path} -C #{java_home} --strip #{depth.to_i - 1} 2>&1"
 
       puts "(#{(Time.now - expand_start_time).duration})"
     end
 
     def self.find_openjdk(configuration)
-      LibertyBuildpack::Repository::ConfiguredItem.find_item(configuration)
+      requested_version = LibertyBuildpack::Util::TokenizedVersion.new(configuration['version'])
+
+      uri = openjdk_uri(configuration)
+      cache.get(uri) do |file|
+        releases = JSON.load(file)
+        if releases.length == 0
+          raise RuntimeError, "No match versions found"
+        end
+
+        candidates = {}
+
+        releases.each do | release |
+          binary_entry = release['binaries'][0]
+          version_data = binary_entry['version_data']
+          unless version_data.nil?
+            sanitized_version = version_data['semver'].gsub(/\+.*$/, '')
+            version = LibertyBuildpack::Util::TokenizedVersion.new(sanitized_version)
+            candidates[version.to_s] = release
+          end
+        end
+
+        found_version = LibertyBuildpack::Repository::VersionResolver.resolve(requested_version, candidates.keys)
+        raise "No version resolvable for '#{requested_version}' in #{candidates.keys.join(', ')}" if found_version.nil?
+        found_release = candidates[found_version.to_s]
+      end
     rescue => e
-      raise RuntimeError, "OpenJdk error: #{e.message}", e.backtrace
+      raise RuntimeError, "Adopt OpenJdk error: #{e.message}", e.backtrace
+    end
+
+    def self.cache
+      LibertyBuildpack::Util::Cache::DownloadCache.new(Pathname.new(Dir.tmpdir),
+                                                       LibertyBuildpack::Util::Cache::CACHED_RESOURCES_DIRECTORY)
+    end
+
+    def self.openjdk_uri(configuration)
+      version = LibertyBuildpack::Util::TokenizedVersion.new(configuration['version'])
+      implementation = configuration['implementation']
+      type = configuration['type']
+      heap_size = configuration['heap_size']
+      "https://api.adoptopenjdk.net/v2/info/releases/openjdk#{version[0]}?openjdk_impl=#{implementation}&type=#{type}&arch=x64&os=linux&heap_size=#{heap_size}"
     end
 
     def id(version)
-      "openjdk-#{version}"
+      "adopt-openjdk-#{version}"
     end
 
     def java_home
