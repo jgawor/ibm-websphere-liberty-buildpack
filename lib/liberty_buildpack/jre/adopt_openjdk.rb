@@ -14,23 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'fileutils'
-require 'liberty_buildpack/diagnostics/common'
-require 'liberty_buildpack/container/common_paths'
-require 'liberty_buildpack/repository/configured_item'
-require 'liberty_buildpack/repository/version_resolver'
-require 'liberty_buildpack/util/cache/application_cache'
-require 'liberty_buildpack/util/format_duration'
-require 'liberty_buildpack/util/tokenized_version'
-require 'pathname'
+
 
 module LibertyBuildpack::Jre
 
   # Encapsulates the detect, compile, and release functionality for selecting an OpenJDK JRE.
   class AdoptOpenJdk
-
-    # Filename of killjava script used to kill the JVM on OOM.
-    KILLJAVA_FILE_NAME = 'killjava.sh'.freeze
 
     # Creates an instance, passing in an arbitrary collection of options.
     #
@@ -49,61 +38,30 @@ module LibertyBuildpack::Jre
       context[:java_home].concat JAVA_HOME unless context[:java_home].include? JAVA_HOME
     end
 
-    # Detects which version of Java this application should use.  *NOTE:* This method will only return a value
-    # if the jvm_type is set to openjdk.
-    #
-    # @return [String, nil] returns +ibmjdk-<version>+.
-    def detect
-      if !@jvm_type.nil? && 'adoptopenjdk'.casecmp(@jvm_type) == 0
-        release = AdoptOpenJdk.find_openjdk(@configuration)
-        id release['release_name']
-      else
-        nil
-      end
-    end
-
     # Downloads and unpacks a OpenJdk
     #
     # @return [void]
-    def compile
-      release = AdoptOpenJdk.find_openjdk(@configuration)
+    def install_jdk
+      release = find_openjdk(@configuration)
       uri = release['binaries'][0]['binary_link']
       @version = release['release_name']
       download_start_time = Time.now
 
-      print "-----> Downloading Adapt OpenJdk #{@version} from #{uri} "
+      print "-----> Downloading OpenJDK #{@version} from #{uri} "
 
       LibertyBuildpack::Util::Cache::ApplicationCache.new.get(uri) do |file| # TODO: Use global cache
         puts "(#{(Time.now - download_start_time).duration})"
         expand file
       end
-      copy_killjava_script
     end
 
-    # Build Java memory options and places then in +context[:java_opts]+
-    #
-    # @return [void]
-    def release
-      release = AdoptOpenJdk.find_openjdk(@configuration)[0]
-      #@java_opts << "-XX:OnOutOfMemoryError=#{@common_paths.diagnostics_directory}/#{KILLJAVA_FILE_NAME}"
-      #memory
+    def java_home
+      File.join @app_dir, JAVA_HOME
     end
-
-    private
-
-    RESOURCES = '../../../resources/openjdk/diagnostics'.freeze
 
     JAVA_HOME = '.java'.freeze
 
-    KEY_MEMORY_HEURISTICS = 'memory_heuristics'.freeze
-
-    KEY_MEMORY_SIZES = 'memory_sizes'.freeze
-
-    MEMORY_CONFIG_FOLDER = '.memory_config/'.freeze
-
-    MEMORY_HEURISTICS_FILE = 'heuristics'.freeze
-
-    MEMORY_SIZES_FILE = 'sizes'.freeze
+    private
 
     def expand(file)
       expand_start_time = Time.now
@@ -118,7 +76,7 @@ module LibertyBuildpack::Jre
       puts "(#{(Time.now - expand_start_time).duration})"
     end
 
-    def self.find_openjdk(configuration)
+    def find_openjdk(configuration)
       requested_version = LibertyBuildpack::Util::TokenizedVersion.new(configuration['version'])
 
       uri = openjdk_uri(configuration)
@@ -148,67 +106,16 @@ module LibertyBuildpack::Jre
       raise RuntimeError, "Adopt OpenJdk error: #{e.message}", e.backtrace
     end
 
-    def self.cache
+    def cache
       LibertyBuildpack::Util::Cache::DownloadCache.new(Pathname.new(Dir.tmpdir),
                                                        LibertyBuildpack::Util::Cache::CACHED_RESOURCES_DIRECTORY)
     end
 
-    def self.openjdk_uri(configuration)
+    def openjdk_uri(configuration)
       version = LibertyBuildpack::Util::TokenizedVersion.new(configuration['version'])
-      implementation = configuration['implementation']
       type = configuration['type']
       heap_size = configuration['heap_size']
       "https://api.adoptopenjdk.net/v2/info/releases/openjdk#{version[0]}?openjdk_impl=#{implementation}&type=#{type}&arch=x64&os=linux&heap_size=#{heap_size}"
-    end
-
-    def id(version)
-      "adopt-openjdk-#{version}"
-    end
-
-    def java_home
-      File.join @app_dir, JAVA_HOME
-    end
-
-    def memory
-      sizes      = @configuration[KEY_MEMORY_SIZES] ? @configuration[KEY_MEMORY_SIZES].clone : {}
-      heuristics = @configuration[KEY_MEMORY_HEURISTICS] ? @configuration[KEY_MEMORY_HEURISTICS].clone : {}
-
-      if @version < VERSION_8
-        heuristics.delete 'metaspace'
-        sizes.delete 'metaspace'
-      else
-        heuristics.delete 'permgen'
-        sizes.delete 'permgen'
-      end
-
-      write_memory_config(heuristics, sizes)
-    end
-
-    def memory_heuristics_file
-      File.join(@app_dir, MEMORY_CONFIG_FOLDER, MEMORY_HEURISTICS_FILE)
-    end
-
-    def memory_sizes_file
-      File.join(@app_dir, MEMORY_CONFIG_FOLDER, MEMORY_SIZES_FILE)
-    end
-
-    def write_memory_config(heuristics, sizes)
-      FileUtils.mkdir_p File.join(@app_dir, MEMORY_CONFIG_FOLDER)
-
-      File.open(memory_heuristics_file, 'w') { |file| file.write(heuristics) }
-
-      File.open(memory_sizes_file, 'w') { |file| file.write(sizes) }
-    end
-
-    def copy_killjava_script
-      resources = File.expand_path(RESOURCES, File.dirname(__FILE__))
-      killjava_file_content = File.read(File.join(resources, KILLJAVA_FILE_NAME))
-      updated_content = killjava_file_content.gsub(/@@LOG_FILE_NAME@@/, LibertyBuildpack::Diagnostics::LOG_FILE_NAME)
-      diagnostic_dir = LibertyBuildpack::Diagnostics.get_diagnostic_directory @app_dir
-      FileUtils.mkdir_p diagnostic_dir
-      File.open(File.join(diagnostic_dir, KILLJAVA_FILE_NAME), 'w', 0o755) do |file|
-        file.write updated_content
-      end
     end
 
   end

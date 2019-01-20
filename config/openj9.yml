@@ -13,23 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Configuration for OpenJdk repository
-# If Java 7 is selected, the 'permgen' option will be used.
-# If Java 8 is selected, the 'metaspace' option will be used.
+# Configuration for OpenJdk+OpenJ9
 # Please see the documentation for more detail.
 ---
-
 version: 11.+
-implementation: openj9
 type: jre
 heap_size: normal
-
-memory_sizes:
-  metaspace: 64m..
-  permgen: 64m..
-memory_heuristics:
-  heap: 75
-  metaspace: 10
-  permgen: 10
-  stack: 5
-  native: 10
+heap_size_ratio: 0.75
