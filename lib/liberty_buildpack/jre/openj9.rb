@@ -78,7 +78,7 @@ module LibertyBuildpack::Jre
     HEAP_RATIO_FILE = 'heap_size_ratio_config'.freeze
 
     def implementation
-      "openj9"
+      'openj9'
     end
 
     def id(version)

@@ -55,7 +55,7 @@ module LibertyBuildpack::Jre
     def detect
       if !@jvm_type.nil? && 'openjdk'.casecmp(@jvm_type) == 0
         @version = OpenJdk.find_openjdk(@configuration)[0]
-        id @version 
+        id(@version)
       end
     end
 

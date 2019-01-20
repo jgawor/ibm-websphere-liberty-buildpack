@@ -79,24 +79,23 @@ module LibertyBuildpack::Jre
       uri = openjdk_uri(requested_version, configuration['type'], configuration['heap_size'])
       cache.get(uri) do |file|
         releases = JSON.load(file)
-        if releases.length == 0
-          raise "No OpenJDK versions found"
-        end
+        raise 'No OpenJDK versions found' if releases.length == 0
 
         candidates = {}
-        releases.each do | release |
+        releases.each do |release|
           binary_entry = release['binaries'][0]
           version_data = binary_entry['version_data']
-          unless version_data.nil?
-            sanitized_version = version_data['semver'].gsub(/\+.*$/, '')
-            version = LibertyBuildpack::Util::TokenizedVersion.new(sanitized_version)
-            candidates[version.to_s] = release
-          end
+          next if version_data.nil?
+
+          sanitized_version = version_data['semver'].gsub(/\+.*$/, '')
+          version = LibertyBuildpack::Util::TokenizedVersion.new(sanitized_version)
+          candidates[version.to_s] = release
         end
 
         found_version = LibertyBuildpack::Repository::VersionResolver.resolve(requested_version, candidates.keys)
         raise "No version resolvable for '#{requested_version}' in #{candidates.keys.join(', ')}" if found_version.nil?
         found_release = candidates[found_version.to_s]
+        return found_release
       end
     rescue => e
       raise RuntimeError, "OpenJDK error: #{e.message}", e.backtrace
