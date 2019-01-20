@@ -47,8 +47,6 @@ module LibertyBuildpack::Jre
       if !@jvm_type.nil? && 'openj9'.casecmp(@jvm_type) == 0
         release = find_openjdk(@configuration)
         id(release['release_name'])
-      else
-        nil
       end
     end
 

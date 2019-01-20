@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-
 module LibertyBuildpack::Jre
 
   # Encapsulates the detect, compile, and release functionality for selecting an OpenJDK JRE.
@@ -55,17 +53,17 @@ module LibertyBuildpack::Jre
       end
     end
 
+    private
+
     def java_home
       File.join @app_dir, JAVA_HOME
     end
 
     JAVA_HOME = '.java'.freeze
 
-    private
-
     def expand(file)
       expand_start_time = Time.now
-      print "       Expanding OpenJdk to #{JAVA_HOME} "
+      print "       Expanding OpenJDK to #{JAVA_HOME} "
 
       FileUtils.rm_rf(java_home)
       FileUtils.mkdir_p(java_home)
@@ -78,16 +76,14 @@ module LibertyBuildpack::Jre
 
     def find_openjdk(configuration)
       requested_version = LibertyBuildpack::Util::TokenizedVersion.new(configuration['version'])
-
-      uri = openjdk_uri(configuration)
+      uri = openjdk_uri(requested_version, configuration['type'], configuration['heap_size'])
       cache.get(uri) do |file|
         releases = JSON.load(file)
         if releases.length == 0
-          raise RuntimeError, "No match versions found"
+          raise "No OpenJDK versions found"
         end
 
         candidates = {}
-
         releases.each do | release |
           binary_entry = release['binaries'][0]
           version_data = binary_entry['version_data']
@@ -103,7 +99,7 @@ module LibertyBuildpack::Jre
         found_release = candidates[found_version.to_s]
       end
     rescue => e
-      raise RuntimeError, "Adopt OpenJdk error: #{e.message}", e.backtrace
+      raise RuntimeError, "OpenJDK error: #{e.message}", e.backtrace
     end
 
     def cache
@@ -111,10 +107,7 @@ module LibertyBuildpack::Jre
                                                        LibertyBuildpack::Util::Cache::CACHED_RESOURCES_DIRECTORY)
     end
 
-    def openjdk_uri(configuration)
-      version = LibertyBuildpack::Util::TokenizedVersion.new(configuration['version'])
-      type = configuration['type']
-      heap_size = configuration['heap_size']
+    def openjdk_uri(version, type, heap_size)
       "https://api.adoptopenjdk.net/v2/info/releases/openjdk#{version[0]}?openjdk_impl=#{implementation}&type=#{type}&arch=x64&os=linux&heap_size=#{heap_size}"
     end
 
