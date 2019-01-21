@@ -9,17 +9,17 @@ env:
 
 Unless otherwise configured, the version of OpenJ9 that will be used is specified in the [`config/openj9.yml`][] file. Versions of Java from the `8` and `11` lines are currently available.
 
-The Liberty buildpack uses the [IBM JRE](ibm-jdk.md) by default.
+The Liberty buildpack uses the [IBM SDK](ibm-jdk.md) by default.
 
 ## Configuration
 
-The JRE can be configured by modifying the [`config/openj9.yml`][] file in the buildpack fork or by passing [an environment variable](configuration.md) that overrides configuration in the yml file.
+OpenJ9 can be configured by modifying the [`config/openj9.yml`][] file in the buildpack fork or by passing [an environment variable](configuration.md) that overrides configuration in the yml file.
 
 | Name | Description
 | ---- | -----------
 | `version` | The version of OpenJ9 to use. Candidate versions can be found on the [AdpotOpenJDK page](https://adoptopenjdk.net/index.html?jvmVariant=openj9). |
-| `type`  | 'jre' (default) or 'jdk'. |
-| `heap_size` | 'normal' (default) or `large`.   |
+| `type`  | `jre` (default) or `jdk`. |
+| `heap_size` | `normal` (default) or `large`.   |
 | `heap_size_ratio` | The ratio that is used to calculate the maximum heap size. The default heap size ratio is `0.75` (75% of the total available memory).
 
 ## Common Configuration Overrides

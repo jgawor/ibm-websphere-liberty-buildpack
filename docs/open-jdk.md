@@ -9,7 +9,7 @@ env:
 
 Unless otherwise configured, the version of OpenJDK JRE that will be used is specified in the [`config/openjdk.yml`][] file. Versions of Java from the `1.6`, `1.7`, and `1.8` lines are available.
 
-The Liberty buildpack uses the [IBM JRE](ibm-jdk.md) by default.
+The Liberty buildpack uses the [IBM SDK](ibm-jdk.md) by default.
 
 ## Configuration
 

@@ -50,7 +50,7 @@ All Documentation is available in the Docs folder of the buildpack.
     * [New Relic Agent](docs/framework-new-relic-agent.md)
     * [Spring Auto Reconfiguration](docs/framework-spring-auto-reconfiguration.md)
 * JVMs
-    * [IBM JRE](docs/ibm-jdk.md)
+    * [IBM SDK](docs/ibm-jdk.md)
     * [OpenJDK](docs/open-jdk.md)
     * [OpenJ9](docs/openj9.md)
 * [Server Behavior xml Options](docs/server-xml-options.md)
