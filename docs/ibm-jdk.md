@@ -29,7 +29,7 @@ The IBM SDK [configuration can be overridden](configuration.md) with the `JBP_CO
    $ cf set-env myApplication JBP_CONFIG_IBMJDK 'heap_size_ratio: 0.90'
    ```
 
-1. Use IBM JRE version 7:
+1. Use IBM SDK version 7:
 
    ```bash
    $ cf set-env myApplication JBP_CONFIG_IBMJDK 'version: 1.7.+'
