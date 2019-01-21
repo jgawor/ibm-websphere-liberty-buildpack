@@ -29,7 +29,7 @@ The OpenJ9 [configuration can be overridden](configuration.md) with the `JBP_CON
 1. Use OpenJ9 version 8:
 
    ```bash
-   $ cf set-env myApplication JBP_CONFIG_IBMJDK 'version: 8.+'
+   $ cf set-env myApplication JBP_CONFIG_OPENJ9 'version: 8.+'
    ```
 
 1. Use full JDK instead of JRE:
