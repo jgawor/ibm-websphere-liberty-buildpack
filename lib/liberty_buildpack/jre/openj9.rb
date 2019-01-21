@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'liberty_buildpack/jre/adopt_openjdk'
+
 module LibertyBuildpack::Jre
 
   # Encapsulates the detect, compile, and release functionality for selecting an OpenJDK JRE.

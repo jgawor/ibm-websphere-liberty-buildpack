@@ -14,6 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'liberty_buildpack/container/common_paths'
+require 'liberty_buildpack/repository/configured_item'
+require 'liberty_buildpack/util/format_duration'
+require 'liberty_buildpack/util/tokenized_version'
+require 'liberty_buildpack/util/cache/application_cache'
+
 module LibertyBuildpack::Jre
 
   # Encapsulates the detect, compile, and release functionality for selecting an OpenJDK JRE.
@@ -68,7 +74,8 @@ module LibertyBuildpack::Jre
       FileUtils.rm_rf(java_home)
       FileUtils.mkdir_p(java_home)
 
-      depth = `tar tf #{file.path} | grep /bin/java | grep -o / | wc -l`
+      # AdoptOpenJDKs do not have jre/bin/java so that's ok
+      depth = `tar tf #{file.path} | grep '/bin/java$' | grep -o / | wc -l`
       system "tar xzf #{file.path} -C #{java_home} --strip #{depth.to_i - 1} 2>&1"
 
       puts "(#{(Time.now - expand_start_time).duration})"
