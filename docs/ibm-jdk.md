@@ -1,5 +1,5 @@
 # IBM JRE
-The IBM JRE is the default JRE used by the Liberty buildpack. Unless otherwise configured, the version of IBM JRE that will be used is specified in the [`config/ibmjdk.yml`][] file. If necessary, the IBM JRE can also be explicitly enabled by setting the `JVM` environment variable to `ibmjdk`. For example, using the `manifest.yml` file:
+The IBM JRE is the default JVM used by the Liberty buildpack. Unless otherwise configured, the version of IBM JRE that will be used is specified in the [`config/ibmjdk.yml`][] file. If necessary, the IBM JRE can also be explicitly enabled by setting the `JVM` environment variable to `ibmjdk`. For example, using the `manifest.yml` file:
 
 ```bash
 ---
@@ -7,11 +7,11 @@ env:
   JVM: ibmjdk
 ```
 
-The Liberty buildpack also supports [OpenJDK](open-jdk.md) as an alternative Java runtime.
+The Liberty buildpack also supports [OpenJDK](open-jdk.md) and [OpenJ9](openj9.md) as alternative JVMs.
 
 ## Configuration
 
-The JRE can be configured by modifying the [`config/ibmjdk.yml`][] file in the buildpack fork or by passing [an environment variable](configuration.md) that overrides configuration in the yml file. 
+The JRE can be configured by modifying the [`config/ibmjdk.yml`][] file in the buildpack fork or by passing [an environment variable](configuration.md) that overrides configuration in the yml file.
 
 | Name | Description
 | ---- | -----------
@@ -38,4 +38,3 @@ The IBM JRE [configuration can be overridden](configuration.md) with the `JBP_CO
 [`config/ibmjdk.yml`]: ../config/ibmjdk.yml
 [index.yml]: http://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta/jre/linux/x86_64/index.yml
 [repositories]: util-repositories.md
-

@@ -1,5 +1,5 @@
 # OpenJDK JRE
-The OpenJDK JRE provides Java runtimes from the [OpenJDK][] project. The OpenJDK JRE must be explicitly enabled to be used by the Liberty buildpack. To enable OpenJDK JRE set the `JVM` environment variable to `openjdk`. For example, add the following to your *manifest.yml* file:
+The OpenJDK JRE provides JVM from the [OpenJDK][] project. The OpenJDK JRE must be explicitly enabled to be used by the Liberty buildpack. To enable OpenJDK JRE set the `JVM` environment variable to `openjdk`. For example, add the following to your *manifest.yml* file:
 
 ```bash
 ---
@@ -13,7 +13,7 @@ The Liberty buildpack uses the [IBM JRE](ibm-jdk.md) by default.
 
 ## Configuration
 
-The JRE can be configured by modifying the [`config/openjdk.yml`][] file in the buildpack fork or by passing [an environment variable](configuration.md) that overrides configuration in the yml file. 
+The JRE can be configured by modifying the [`config/openjdk.yml`][] file in the buildpack fork or by passing [an environment variable](configuration.md) that overrides configuration in the yml file.
 
 | Name | Description
 | ---- | -----------
@@ -94,4 +94,3 @@ The environment variables can also be specified in the [manifest.yml](http://doc
 [OpenJDK]: http://openjdk.java.net
 [precise]: http://download.pivotal.io.s3.amazonaws.com/openjdk/precise/x86_64/index.yml
 [repositories]: util-repositories.md
-
