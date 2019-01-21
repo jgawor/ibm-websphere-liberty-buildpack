@@ -24,49 +24,30 @@ module LibertyBuildpack::Jre
   describe OpenJ9 do
     include_context 'component_helper'
 
-    let(:configuration) do
+    let(:default_configuration) do
       { 'version' => '11.+',
         'type' => 'jre',
-        'heap_size' => 'normal',
-        'heap_size_ratio' => '0.75' }
+        'heap_size' => 'normal' }
     end
 
     let(:application_cache) { double('ApplicationCache') }
 
-    let(:stubs) {
+    def stubs
       LibertyBuildpack::Util::Cache::DownloadCache.stub(:new).and_return(application_cache)
       application_cache.stub(:get).with('https://api.adoptopenjdk.net/v2/info/releases/openjdk11?openjdk_impl=openj9&type=jre&arch=x64&os=linux&heap_size=normal').and_yield(File.open('spec/fixtures/openj9-releases.json'))
       application_cache.stub(:get).with('https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11%2B28/OpenJDK11-jre_x64_linux_openj9_11_28.tar.gz').and_yield(File.open('spec/fixtures/stub-ibm-java.tar.gz'))
-    }
-
-    it 'should detect with id of openjdk-<version>' do
-      Dir.mktmpdir do |root|
-        stubs
-        detected = OpenJ9.new(
-          app_dir: root,
-          java_home: '',
-          java_opts: [],
-          configuration: configuration,
-          jvm_type: 'openj9'
-        ).detect
-
-        expect(detected).to eq("openj9-jdk-11+28")
-      end
     end
 
-    it 'should extract Java from a GZipped TAR' do
-      Dir.mktmpdir do |root|
-        stubs
-        OpenJ9.new(
-          app_dir: root,
-          configuration: configuration,
-          java_home: '',
-          java_opts: [],
-        ).compile
-
-        java = File.join(root, '.java', 'bin', 'java')
-        expect(File.exist?(java)).to eq(true)
-      end
+    def openj9(root, configuration = default_configuration)
+      stubs
+      component = OpenJ9.new(
+        app_dir: root,
+        java_home: '',
+        java_opts: [],
+        configuration: configuration,
+        jvm_type: 'openj9'
+      )
+      component
     end
 
     it 'adds the JAVA_HOME to java_home' do
@@ -77,102 +58,71 @@ module LibertyBuildpack::Jre
           app_dir: root,
           java_home: java_home,
           java_opts: [],
-          configuration: configuration
+          configuration: default_configuration
         )
 
         expect(java_home).to eq('.java')
       end
     end
 
-=begin
-    describe 'compile',
-             java_home: '',
-             java_opts: [],
-             configuration: {},
-             license_ids: { 'IBM_JVM_LICENSE' => '1234-ABCD' },
-             service_release: service_release do
+    describe 'detect' do
 
-      before do |example|
-        # get the application cache fixture from the application_cache double provided in the overall setup
-        LibertyBuildpack::Util::Cache::ApplicationCache.stub(:new).and_return(application_cache)
-        cache_fixture = example.metadata[:cache_fixture]
-        application_cache.stub(:get).with(uri).and_yield(File.open("spec/fixtures/#{cache_fixture}")) if cache_fixture
+      it 'should detect with id of openj9-<version>' do
+        Dir.mktmpdir do |root|
+          detected = openj9(root).detect
+
+          expect(detected).to eq('openj9-jdk-11+28')
+        end
       end
 
-      # context is provided by component_helper, its default values are provided by 'describe' metadata, and
-      # customized through test's metadata
-      subject(:compiled) { IBMJdk.new(context).compile }
+    end
 
-      it 'should extract Java from a bin script', cache_fixture: 'stub-ibm-java.bin' do
-        compiled
+    describe 'compile' do
 
-        java = File.join(app_dir, '.java', 'jre', 'bin', 'java')
-        expect(File.exist?(java)).to eq(true)
+      it 'should extract Java from a tar gz' do
+        Dir.mktmpdir do |root|
+          openj9(root).compile
+
+          java = File.join(root, '.java', 'bin', 'java')
+          expect(File.exist?(java)).to eq(true)
+        end
       end
 
-      it 'should extract Java from a tar gz', cache_fixture: 'stub-ibm-java.tar.gz' do
-        compiled
+      it 'places the killjava script (with appropriately substituted content) in the diagnostics directory' do
+        Dir.mktmpdir do |root|
+          openj9(root).compile
 
-        java = File.join(app_dir, '.java', 'jre', 'bin', 'java')
-        expect(File.exist?(java)).to eq(true)
+          expect(Pathname.new(File.join(LibertyBuildpack::Diagnostics.get_diagnostic_directory(root), OpenJ9::KILLJAVA_FILE_NAME))).to exist
+        end
       end
 
-      it 'should fail when the license id is not provided', app_dir: '', license_ids: {} do
-        expect { compiled }.to raise_error
-      end
+      it 'should add 0.50 ratio when heap_size_ratio is set to 50%' do
+        Dir.mktmpdir do |root|
+          configuration = default_configuration.clone
+          configuration['heap_size_ratio'] = '0.50'
+          openj9(root, configuration).compile
 
-      it 'should fail when the license ids do not match', app_dir: '', license_ids: { 'IBM_JVM_LICENSE' => 'Incorrect' } do
-        expect { compiled }.to raise_error
-      end
-
-      it 'should not fail when the license url is not provided', app_dir: '', license_ids: {}, cache_fixture: 'stub-ibm-java.tar.gz' do
-        ibmjdk_config = [LibertyBuildpack::Util::TokenizedVersion.new(service_release), { 'uri' => uri }]
-        LibertyBuildpack::Repository::ConfiguredItem.stub(:find_item).and_return(ibmjdk_config)
-
-        compiled
-
-        java = File.join(app_dir, '.java', 'jre', 'bin', 'java')
-        expect(File.exist?(java)).to eq(true)
-      end
-
-      it 'places the killjava script (with appropriately substituted content) in the diagnostics directory', cache_fixture: 'stub-ibm-java.bin' do
-        compiled
-
-        expect(Pathname.new(File.join(LibertyBuildpack::Diagnostics.get_diagnostic_directory(app_dir), IBMJdk::KILLJAVA_FILE_NAME))).to exist
-      end
-
-      it 'should add 0.50 ratio when heap_size_ratio is set to 50%', configuration: { 'heap_size_ratio' => 0.50 } do
-        compiled
-
-        my_app_dir = component.instance_variable_get('@app_dir')
-        memory_config = File.read("#{my_app_dir}/.memory_config/heap_size_ratio_config")
-        expect(memory_config).to include('0.5')
+          memory_config = File.read("#{root}/.memory_config/heap_size_ratio_config")
+          expect(memory_config).to include('0.5')
+        end
       end
 
       it 'should add 0.75 ratio when heap_size_ratio is not set' do
-        compiled
+        Dir.mktmpdir do |root|
+          openj9(root).compile
 
-        my_app_dir = component.instance_variable_get('@app_dir')
-        memory_config = File.read("#{my_app_dir}/.memory_config/heap_size_ratio_config")
-        expect(memory_config).to include('0.75')
+          memory_config = File.read("#{root}/.memory_config/heap_size_ratio_config")
+          expect(memory_config).to include('0.75')
+        end
       end
 
     end # end of compile shared tests
-=end
+
     describe 'release' do
 
-      # context is provided by component_helper, its default values are provided by 'describe' metadata, and
-      # customized through test's metadata
       subject(:released) do
         Dir.mktmpdir do |root|
-          stubs
-          component = OpenJ9.new(
-            app_dir: root,
-            java_home: '',
-            java_opts: [],
-            configuration: configuration,
-            jvm_type: 'openj9'
-          )
+          component = openj9(root)
           component.detect
           component.release
         end
@@ -190,7 +140,7 @@ module LibertyBuildpack::Jre
       it 'should provide troubleshooting info for JVM shutdowns' do
         expect(released).to include("-Xdump:tool:events=systhrow,filter=java/lang/OutOfMemoryError,request=serial+exclusive,exec=./#{LibertyBuildpack::Diagnostics::DIAGNOSTICS_DIRECTORY}/#{OpenJ9::KILLJAVA_FILE_NAME}")
       end
-    end # end of release shared tests
+    end
 
   end
 end
